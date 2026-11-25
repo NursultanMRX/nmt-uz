@@ -139,11 +139,10 @@ def _convert(fp32: Path, out: Path, variant: str) -> None:
         quantize_dynamic(fp32, out, weight_type=QuantType.QInt8,
                          op_types_to_quantize=["MatMul", "Gather"])
     elif variant == "int4":
+        from onnx import version_converter
         from onnxruntime.quantization.matmul_nbits_quantizer import MatMulNBitsQuantizer
 
         # Quantizing Gather raises the opset to 21 without upgrading the other ops; do it first.
-        from onnx import version_converter
-
         model = version_converter.convert_version(onnx.load(fp32), 21)
         quant = MatMulNBitsQuantizer(model, block_size=32, is_symmetric=True,
                                      op_types_to_quantize=("MatMul", "Gather"),
