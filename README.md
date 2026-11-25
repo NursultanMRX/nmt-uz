@@ -83,6 +83,26 @@ Quantizing costs our model almost nothing in quality (at most 0.2 chrF) and int4
 52 MB, but bitsandbytes kernels are slower than fp16, so int8 and int4 save memory, not time.
 Batches above 64 slow down again, for the same beam-search overhead as in the CPU numbers above.
 
+### ONNX
+
+[nickoo004/nmt-uz-76m-onnx](https://huggingface.co/nickoo004/nmt-uz-76m-onnx) has the model
+in ONNX at four precisions. It runs on onnxruntime, numpy and sentencepiece, with no PyTorch
+([src/onnx_export.py](src/onnx_export.py), [src/onnx_translator.py](src/onnx_translator.py)).
+Quality is FLORES+ devtest at beam 5. Latency is one sentence at a time on the same 4-core
+CPU, median in milliseconds, en→uz / uz→en:
+
+| Model | Size | en→uz BLEU / chrF | uz→en BLEU / chrF | Beam 4 | Beam 1 |
+|---|---:|---:|---:|---:|---:|
+| PyTorch fp32 | 292 MB | 19.89 / 57.53 | 27.70 / 55.94 | 417 / 429 | 349 / 387 |
+| ONNX fp32 | 372 MB | 19.88 / 57.54 | 27.70 / 55.93 | 350 / 362 | 160 / 156 |
+| ONNX fp16 | 186 MB | 19.88 / 57.54 | 27.70 / 55.93 | 326 / 352 | 195 / 194 |
+| **ONNX int8** | **94 MB** | 19.62 / 57.46 | 27.72 / 55.94 | **197 / 197** | **79 / 96** |
+| ONNX int4 | 59 MB | 19.88 / 57.67 | 27.39 / 55.74 | 276 / 260 | 138 / 148 |
+
+int8 is the default. It is about 2× faster than PyTorch at beam 4 and 4× faster greedy, and
+stays within 0.3 BLEU. ONNX fp32 gives the same tokens as PyTorch (tested). int4 is the
+smallest download, but on a CPU it runs slower than int8.
+
 ### Shorter text in the 2026 alphabet
 
 ş ç ğ ö are one letter where the 1995 alphabet used two (sh ch gʻ oʻ). On the Uzbek side of
@@ -117,6 +137,15 @@ tr = Translator.from_pretrained("nickoo004/nmt-uz-76m")   # or a local release/ 
 tr.translate("The library opens at nine.", target="uz")
 tr.translate(["Ўзбекистон пойтахти", "Oʻzbekiston poytaxti"], target="en")
 tr.translate("Good idea.", target="uz", script="old")    # gʻ oʻ sh ch instead of ğ ö ş ç
+```
+
+**ONNX, without PyTorch** (`pip install onnxruntime numpy sentencepiece huggingface_hub`)
+
+```python
+from src.onnx_translator import OnnxTranslator
+
+tr = OnnxTranslator.from_pretrained("nickoo004/nmt-uz-76m-onnx", precision="int8")
+tr.translate("The library opens at nine.", target="uz")   # same arguments as Translator
 ```
 
 **HTTP** (`docker compose up`, then open `localhost:8000/docs`)
@@ -228,6 +257,8 @@ src/evaluation/      beam search translation, BLEU / chrF++
 src/benchmark.py     FLORES+ comparison with NLLB-200, COMET
 src/export.py        checkpoint -> safetensors release
 src/inference.py     Translator
+src/onnx_export.py   release -> ONNX encoder and decoder, fp32 / fp16 / int8 / int4
+src/onnx_translator.py  OnnxTranslator: beam search in numpy, no PyTorch
 src/serve.py         FastAPI service
 modal_app.py         everything above on Modal
 scripts/             README figures and an end-to-end smoke test
