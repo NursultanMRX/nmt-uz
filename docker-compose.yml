@@ -1,0 +1,15 @@
+services:
+  translator:
+    image: nmt-uz
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      MODEL_ID: ${MODEL_ID:-nickoo004/nmt-uz-76m}
+      HF_TOKEN: ${HF_TOKEN:-}
+    volumes:
+      - model-cache:/cache
+    restart: unless-stopped
+
+volumes:
+  model-cache:

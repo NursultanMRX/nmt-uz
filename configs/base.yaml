@@ -1,0 +1,33 @@
+# Main run: bidirectional en<->uz, one T4 (fp16).
+model:
+  d_model: 640
+  n_heads: 10
+  n_kv_heads: 10
+  enc_layers: 8
+  dec_layers: 4
+  ffn_dim: 1728
+  dropout: 0.1
+  max_len: 256
+
+train:
+  max_tokens: 12000
+  accum: 2
+  lr: 7.0e-4
+  warmup_steps: 4000
+  total_steps: 50000
+  decay_frac: 0.1
+  min_lr_ratio: 0.1
+  cooldown_clean_ratio: 0.7
+  label_smoothing: 0.1
+  stable_ce: true
+  eval_every: 2000
+  save_every: 500     # Modal can preempt the GPU; a restart resumes from here
+  eval_beam: 4
+  eval_max_sents: 500
+
+data:
+  train: stores/train
+  cooldown: stores/clean
+  extra: []            # e.g. [stores/bt] once back-translations exist
+  tokenizer: spm/spm.model
+  eval: eval/flores_dev.jsonl

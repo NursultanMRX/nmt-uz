@@ -1,0 +1,37 @@
+# Short runs on a 6 GB laptop GPU to compare one change at a time.
+# Same model as base.yaml, ~100M tokens per run instead of ~1B.
+#   python -m src.train --config configs/ablation.yaml --run-dir runs/abl_stable_ce
+#   python -m src.train --config configs/ablation.yaml --run-dir runs/abl_plain_ce --set train.stable_ce=false
+#   python -m src.train --config configs/ablation.yaml --run-dir runs/abl_no_cooldown --set train.cooldown_clean_ratio=0
+model:
+  d_model: 640
+  n_heads: 10
+  n_kv_heads: 10
+  enc_layers: 8
+  dec_layers: 4
+  ffn_dim: 1728
+  dropout: 0.1
+  max_len: 256
+
+train:
+  max_tokens: 4000
+  accum: 3
+  lr: 7.0e-4
+  warmup_steps: 1000
+  total_steps: 8000
+  decay_frac: 0.1
+  min_lr_ratio: 0.1
+  cooldown_clean_ratio: 0.7
+  label_smoothing: 0.1
+  stable_ce: true
+  eval_every: 1000
+  save_every: 1000
+  eval_beam: 4
+  eval_max_sents: 300
+
+data:
+  train: stores/train
+  cooldown: stores/clean
+  extra: []
+  tokenizer: spm/spm.model
+  eval: eval/flores_dev.jsonl

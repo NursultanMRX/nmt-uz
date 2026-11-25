@@ -1,0 +1,227 @@
+{
+  "sources": {
+    "ted2020": {
+      "raw": 6334,
+      "empty": 86,
+      "markup": 9,
+      "ratio": 60,
+      "copy": 2,
+      "too_long": 1,
+      "kept": 6176,
+      "dedup": {
+        "kept": 6084,
+        "duplicate": 87,
+        "over_cap": 5
+      }
+    },
+    "qed": {
+      "raw": 3767,
+      "ratio": 68,
+      "copy": 18,
+      "markup": 3,
+      "non_text": 3,
+      "too_long": 2,
+      "kept": 3673,
+      "dedup": {
+        "duplicate": 1823,
+        "kept": 1840,
+        "over_cap": 10
+      }
+    },
+    "ml_jonibek": {
+      "raw": 25372,
+      "too_long": 196,
+      "ratio": 9,
+      "copy": 9,
+      "empty": 1,
+      "kept": 25157,
+      "dedup": {
+        "kept": 25156,
+        "duplicate": 1
+      }
+    },
+    "jonibek21": {
+      "raw": 47992,
+      "ratio": 36,
+      "too_long": 222,
+      "copy": 24,
+      "empty": 2,
+      "kept": 47708,
+      "dedup": {
+        "kept": 22540,
+        "duplicate": 25168
+      }
+    },
+    "pythoninverter": {
+      "raw": 47992,
+      "ratio": 36,
+      "too_long": 222,
+      "copy": 24,
+      "empty": 2,
+      "kept": 47708,
+      "dedup": {
+        "duplicate": 47708
+      }
+    },
+    "wikimedia": {
+      "raw": 1372671,
+      "ratio": 48987,
+      "non_text": 4768,
+      "too_long": 10539,
+      "copy": 10185,
+      "markup": 2968,
+      "kept": 1295224,
+      "dedup": {
+        "kept": 1112561,
+        "duplicate": 165869,
+        "over_cap": 16794
+      }
+    },
+    "opus100": {
+      "raw": 177157,
+      "copy": 2446,
+      "ratio": 13648,
+      "non_text": 441,
+      "markup": 83,
+      "too_long": 8,
+      "kept": 160531,
+      "dedup": {
+        "kept": 63655,
+        "over_cap": 70442,
+        "duplicate": 26434
+      }
+    },
+    "shakhzo_clean": {
+      "raw": 234975,
+      "non_text": 378,
+      "ratio": 2516,
+      "copy": 724,
+      "too_long": 17,
+      "kept": 231339,
+      "empty": 1,
+      "dedup": {
+        "duplicate": 231205,
+        "kept": 134
+      }
+    },
+    "shakhzo": {
+      "raw": 1007026,
+      "ratio": 34455,
+      "copy": 7473,
+      "too_long": 8816,
+      "non_text": 3817,
+      "markup": 2249,
+      "kept": 950215,
+      "empty": 1,
+      "dedup": {
+        "duplicate": 948865,
+        "kept": 1323,
+        "over_cap": 27
+      }
+    },
+    "tanzil": {
+      "raw": 140701,
+      "ratio": 12377,
+      "non_text": 3,
+      "copy": 72,
+      "too_long": 9,
+      "kept": 128240,
+      "dedup": {
+        "duplicate": 110661,
+        "kept": 3895,
+        "over_cap": 13684
+      }
+    },
+    "kde4": {
+      "raw": 37830,
+      "ratio": 5075,
+      "copy": 736,
+      "markup": 59,
+      "too_long": 4,
+      "non_text": 264,
+      "kept": 31692,
+      "dedup": {
+        "duplicate": 27383,
+        "kept": 885,
+        "over_cap": 3424
+      }
+    },
+    "gnome": {
+      "raw": 33312,
+      "copy": 2124,
+      "ratio": 591,
+      "markup": 58,
+      "non_text": 247,
+      "kept": 30292,
+      "dedup": {
+        "duplicate": 29763,
+        "kept": 263,
+        "over_cap": 266
+      }
+    },
+    "ubuntu": {
+      "raw": 2185,
+      "ratio": 38,
+      "markup": 13,
+      "copy": 80,
+      "non_text": 4,
+      "kept": 2050,
+      "dedup": {
+        "duplicate": 1743,
+        "over_cap": 110,
+        "kept": 197
+      }
+    },
+    "translatewiki": {
+      "raw": 10038,
+      "markup": 192,
+      "copy": 149,
+      "ratio": 61,
+      "non_text": 11,
+      "kept": 9625,
+      "dedup": {
+        "kept": 6844,
+        "over_cap": 398,
+        "duplicate": 2383
+      }
+    },
+    "tldr": {
+      "raw": 1378,
+      "ratio": 6,
+      "markup": 2,
+      "kept": 1370,
+      "dedup": {
+        "kept": 331,
+        "duplicate": 1030,
+        "over_cap": 9
+      }
+    },
+    "nllb": {
+      "raw": 30983866,
+      "ratio": 53236,
+      "markup": 34682,
+      "copy": 196,
+      "kept": 30895752,
+      "dedup": {
+        "kept": 25188723,
+        "over_cap": 4735773,
+        "duplicate": 971250,
+        "leakage": 6
+      }
+    }
+  },
+  "blocklist_keys": 8036,
+  "stores": {
+    "too_many_tokens": 5854,
+    "train": {
+      "pairs": 26428577,
+      "en_tokens": 477204807,
+      "uz_tokens": 432591543
+    },
+    "clean": {
+      "pairs": 1162346,
+      "en_tokens": 51102551,
+      "uz_tokens": 46288779
+    }
+  }
+}

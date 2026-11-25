@@ -1,0 +1,24 @@
+{
+  "system": "nllb",
+  "precision": "int8",
+  "gpu": "Tesla T4",
+  "weights_mb": 837.2,
+  "seconds": {
+    "1": 3972.8,
+    "8": 704.3,
+    "32": 247.9,
+    "64": 168.1,
+    "128": 173.3,
+    "256": null
+  },
+  "quality": {
+    "en2uz": {
+      "bleu": 14.82,
+      "chrf": 52.64
+    },
+    "uz2en": {
+      "bleu": 31.12,
+      "chrf": 58.31
+    }
+  }
+}

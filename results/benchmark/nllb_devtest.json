@@ -1,0 +1,54 @@
+{
+  "system": "nllb",
+  "model": "facebook/nllb-200-distilled-600M",
+  "split": "devtest",
+  "beam": 5,
+  "full": {
+    "sentences": 1012,
+    "compat": {
+      "en2uz": {
+        "bleu": 14.9,
+        "chrf": 52.8,
+        "chrfpp": 47.8,
+        "comet": 0.8786
+      },
+      "uz2en": {
+        "bleu": 31.33,
+        "chrf": 58.42,
+        "chrfpp": 56.39,
+        "comet": 0.8578
+      }
+    },
+    "native": {
+      "en2uz": {
+        "bleu": 15.09,
+        "chrf": 51.96,
+        "chrfpp": 47.22
+      }
+    }
+  },
+  "first200": {
+    "sentences": 200,
+    "compat": {
+      "en2uz": {
+        "bleu": 13.38,
+        "chrf": 53.61,
+        "chrfpp": 48.18,
+        "comet": 0.8887
+      },
+      "uz2en": {
+        "bleu": 30.6,
+        "chrf": 58.58,
+        "chrfpp": 56.37,
+        "comet": 0.8677
+      }
+    },
+    "native": {
+      "en2uz": {
+        "bleu": 13.76,
+        "chrf": 52.86,
+        "chrfpp": 47.7
+      }
+    }
+  }
+}

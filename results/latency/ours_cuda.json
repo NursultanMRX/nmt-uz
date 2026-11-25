@@ -1,0 +1,33 @@
+{
+  "system": "ours",
+  "device": "cuda",
+  "hardware": "Tesla T4",
+  "beam4": {
+    "en2uz": {
+      "p50_ms": 195.0,
+      "p95_ms": 335.2,
+      "batch_ms_per_sentence": 36.7,
+      "sentences": 100
+    },
+    "uz2en": {
+      "p50_ms": 206.1,
+      "p95_ms": 347.3,
+      "batch_ms_per_sentence": 32.7,
+      "sentences": 100
+    }
+  },
+  "beam1": {
+    "en2uz": {
+      "p50_ms": 181.2,
+      "p95_ms": 296.5,
+      "batch_ms_per_sentence": 11.2,
+      "sentences": 100
+    },
+    "uz2en": {
+      "p50_ms": 187.8,
+      "p95_ms": 325.4,
+      "batch_ms_per_sentence": 11.8,
+      "sentences": 100
+    }
+  }
+}

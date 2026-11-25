@@ -1,0 +1,33 @@
+{
+  "system": "nllb",
+  "device": "cpu",
+  "hardware": "CPU x4",
+  "beam4": {
+    "en2uz": {
+      "p50_ms": 6908.6,
+      "p95_ms": 11675.8,
+      "batch_ms_per_sentence": 2302.1,
+      "sentences": 100
+    },
+    "uz2en": {
+      "p50_ms": 5397.2,
+      "p95_ms": 8622.2,
+      "batch_ms_per_sentence": 1754.2,
+      "sentences": 100
+    }
+  },
+  "beam1": {
+    "en2uz": {
+      "p50_ms": 5374.6,
+      "p95_ms": 9406.4,
+      "batch_ms_per_sentence": 1375.5,
+      "sentences": 100
+    },
+    "uz2en": {
+      "p50_ms": 4350.0,
+      "p95_ms": 7582.5,
+      "batch_ms_per_sentence": 619.8,
+      "sentences": 100
+    }
+  }
+}

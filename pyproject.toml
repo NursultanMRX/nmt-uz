@@ -1,0 +1,45 @@
+[project]
+name = "nmt-uz"
+version = "0.1.0"
+description = "Bidirectional en<->uz NMT, Transformer from scratch"
+requires-python = ">=3.11"
+dependencies = [
+    "torch>=2.4",
+    "datasets>=3.0",
+    "sentencepiece>=0.2",
+    "sacrebleu>=2.4",
+    "pyyaml",
+    "tqdm",
+    "pyarrow",
+    "polars>=2.1.0",
+    "safetensors>=0.4",
+    "huggingface-hub>=0.25",
+]
+
+[project.optional-dependencies]
+wandb = ["wandb"]
+serve = ["fastapi>=0.115", "uvicorn[standard]>=0.30"]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+    "httpx",
+    "matplotlib>=3.11.2",
+]
+
+# PyPI only ships CPU torch for Windows; Linux wheels (Modal) already include CUDA.
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu128", marker = "sys_platform == 'win32'" }]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

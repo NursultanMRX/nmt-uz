@@ -1,0 +1,54 @@
+{
+  "system": "ours",
+  "model": "/ckpt/runs/base/release",
+  "split": "devtest",
+  "beam": 5,
+  "full": {
+    "sentences": 1012,
+    "compat": {
+      "en2uz": {
+        "bleu": 19.89,
+        "chrf": 57.53,
+        "chrfpp": 52.78,
+        "comet": 0.8831
+      },
+      "uz2en": {
+        "bleu": 27.7,
+        "chrf": 55.94,
+        "chrfpp": 53.89,
+        "comet": 0.8322
+      }
+    },
+    "native": {
+      "en2uz": {
+        "bleu": 20.41,
+        "chrf": 57.1,
+        "chrfpp": 52.6
+      }
+    }
+  },
+  "first200": {
+    "sentences": 200,
+    "compat": {
+      "en2uz": {
+        "bleu": 18.1,
+        "chrf": 56.33,
+        "chrfpp": 51.44,
+        "comet": 0.8772
+      },
+      "uz2en": {
+        "bleu": 26.5,
+        "chrf": 55.66,
+        "chrfpp": 53.42,
+        "comet": 0.8394
+      }
+    },
+    "native": {
+      "en2uz": {
+        "bleu": 18.59,
+        "chrf": 55.91,
+        "chrfpp": 51.22
+      }
+    }
+  }
+}

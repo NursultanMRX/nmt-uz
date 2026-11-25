@@ -1,0 +1,9 @@
+{
+  "sentences": 1012,
+  "chars_1995": 149337,
+  "chars_2026": 143153,
+  "chars_saved_pct": 4.14,
+  "tokens_2026": 33387,
+  "tokens_1995_estimate": 34829,
+  "tokens_1995_with_our_tokenizer": 43799
+}
