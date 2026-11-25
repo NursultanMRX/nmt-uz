@@ -1,0 +1,54 @@
+{
+  "system": "onnx-fp16",
+  "model": "/ckpt/runs/base/release",
+  "split": "devtest",
+  "beam": 5,
+  "full": {
+    "sentences": 1012,
+    "compat": {
+      "en2uz": {
+        "bleu": 19.88,
+        "chrf": 57.54,
+        "chrfpp": 52.79,
+        "comet": 0.883
+      },
+      "uz2en": {
+        "bleu": 27.7,
+        "chrf": 55.93,
+        "chrfpp": 53.89,
+        "comet": 0.8321
+      }
+    },
+    "native": {
+      "en2uz": {
+        "bleu": 20.41,
+        "chrf": 57.11,
+        "chrfpp": 52.6
+      }
+    }
+  },
+  "first200": {
+    "sentences": 200,
+    "compat": {
+      "en2uz": {
+        "bleu": 18.13,
+        "chrf": 56.3,
+        "chrfpp": 51.42,
+        "comet": 0.8768
+      },
+      "uz2en": {
+        "bleu": 26.5,
+        "chrf": 55.67,
+        "chrfpp": 53.42,
+        "comet": 0.8394
+      }
+    },
+    "native": {
+      "en2uz": {
+        "bleu": 18.62,
+        "chrf": 55.89,
+        "chrfpp": 51.2
+      }
+    }
+  }
+}

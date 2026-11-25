@@ -1,0 +1,54 @@
+{
+  "system": "onnx-int8",
+  "model": "/ckpt/runs/base/release",
+  "split": "devtest",
+  "beam": 5,
+  "full": {
+    "sentences": 1012,
+    "compat": {
+      "en2uz": {
+        "bleu": 19.62,
+        "chrf": 57.46,
+        "chrfpp": 52.68,
+        "comet": 0.882
+      },
+      "uz2en": {
+        "bleu": 27.72,
+        "chrf": 55.94,
+        "chrfpp": 53.92,
+        "comet": 0.8317
+      }
+    },
+    "native": {
+      "en2uz": {
+        "bleu": 20.13,
+        "chrf": 57.05,
+        "chrfpp": 52.51
+      }
+    }
+  },
+  "first200": {
+    "sentences": 200,
+    "compat": {
+      "en2uz": {
+        "bleu": 17.56,
+        "chrf": 56.2,
+        "chrfpp": 51.26,
+        "comet": 0.8749
+      },
+      "uz2en": {
+        "bleu": 26.33,
+        "chrf": 55.64,
+        "chrfpp": 53.45,
+        "comet": 0.8376
+      }
+    },
+    "native": {
+      "en2uz": {
+        "bleu": 17.91,
+        "chrf": 55.8,
+        "chrfpp": 51.05
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "system": "onnx-fp16",
+  "device": "cpu",
+  "hardware": "CPU x4",
+  "beam4": {
+    "en2uz": {
+      "p50_ms": 326.1,
+      "p95_ms": 699.0,
+      "batch_ms_per_sentence": 385.7,
+      "sentences": 100
+    },
+    "uz2en": {
+      "p50_ms": 352.5,
+      "p95_ms": 692.9,
+      "batch_ms_per_sentence": 388.6,
+      "sentences": 100
+    }
+  },
+  "beam1": {
+    "en2uz": {
+      "p50_ms": 194.7,
+      "p95_ms": 375.0,
+      "batch_ms_per_sentence": 93.6,
+      "sentences": 100
+    },
+    "uz2en": {
+      "p50_ms": 193.5,
+      "p95_ms": 390.4,
+      "batch_ms_per_sentence": 89.9,
+      "sentences": 100
+    }
+  }
+}

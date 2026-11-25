@@ -1,0 +1,33 @@
+{
+  "system": "onnx-int8",
+  "device": "cpu",
+  "hardware": "CPU x4",
+  "beam4": {
+    "en2uz": {
+      "p50_ms": 196.9,
+      "p95_ms": 424.2,
+      "batch_ms_per_sentence": 353.0,
+      "sentences": 100
+    },
+    "uz2en": {
+      "p50_ms": 197.0,
+      "p95_ms": 401.1,
+      "batch_ms_per_sentence": 339.8,
+      "sentences": 100
+    }
+  },
+  "beam1": {
+    "en2uz": {
+      "p50_ms": 79.4,
+      "p95_ms": 146.1,
+      "batch_ms_per_sentence": 67.3,
+      "sentences": 100
+    },
+    "uz2en": {
+      "p50_ms": 95.8,
+      "p95_ms": 176.1,
+      "batch_ms_per_sentence": 57.1,
+      "sentences": 100
+    }
+  }
+}
