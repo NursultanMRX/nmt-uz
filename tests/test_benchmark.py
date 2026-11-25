@@ -106,3 +106,22 @@ def test_render_table_puts_ours_first(tmp_path):
     rows = render_table(tmp_path, subset="first200").splitlines()[2:]
     assert "(ours)" in rows[0]
     assert "600M (our run)" in rows[1] and "1.3B (our run)" in rows[2]
+
+
+@pytest.mark.parametrize("system", ["onnx-fp32", "onnx-int8"])
+def test_onnx_systems_are_scored_like_ours(system):
+    rows = _rows(2)
+    hyps = {"en2uz": [f"xayrli tong öqiş {i}" for i in range(2)],
+            "uz2en": [r["en"] for r in rows]}
+    res = score_all(system, rows, hyps, subsets={"full": None})
+    assert res["full"]["compat"]["en2uz"]["chrf"] == 100.0  # written in the 2026 alphabet too
+
+
+def test_render_table_lists_onnx_variants_after_ours(tmp_path):
+    scores = {"bleu": 10.0, "chrf": 50.0, "chrfpp": 48.0}
+    for system in ("nllb", "onnx-int4", "ours", "onnx-fp32"):
+        result = {"system": system, "first200": {"compat": {"en2uz": scores, "uz2en": scores}}}
+        (tmp_path / f"{system}_devtest.json").write_text(json.dumps(result))
+    rows = render_table(tmp_path, subset="first200").splitlines()[2:]
+    assert "(ours)" in rows[0] and "ONNX fp32" in rows[1] and "ONNX int4" in rows[2]
+    assert "600M (our run)" in rows[3]

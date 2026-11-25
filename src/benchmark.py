@@ -37,6 +37,8 @@ PUBLISHED = {
 # system: (display name, params, default model)
 SYSTEMS = {
     "ours": ("nmt-uz-76m (ours)", "76.5M", "release/"),
+    **{f"onnx-{p}": (f"nmt-uz-76m, ONNX {p}", "76.5M", "release/")
+       for p in ("fp32", "fp16", "int8", "int4")},
     "nllb": ("NLLB-200-distilled-600M (our run)", "600M", "facebook/nllb-200-distilled-600M"),
     "nllb-1.3b": ("NLLB-200-distilled-1.3B (our run)", "1.3B", "facebook/nllb-200-distilled-1.3B"),
 }
@@ -107,7 +109,7 @@ def score_all(system: str, rows: list[dict], hyps: dict[str, list[str]],
               subsets: dict[str, int | None] = SUBSETS, comet=None) -> dict:
     en, uz = [r["en"] for r in rows], [r["uz"] for r in rows]
     uz_new = [normalize_uz(t) for t in uz]
-    if system == "ours":
+    if system == "ours" or system.startswith("onnx-"):
         en2uz_old, en2uz_new = to_reference_script(hyps["en2uz"], uz), hyps["en2uz"]
     else:
         en2uz_old, en2uz_new = hyps["en2uz"], [normalize_uz(h) for h in hyps["en2uz"]]
@@ -162,6 +164,10 @@ def translate_flores(system: str, model: str, rows: list[dict], beam: int) -> di
     device = "cuda" if torch.cuda.is_available() else "cpu"
     if system.startswith("nllb"):
         translator = NLLB.from_pretrained(model, device)
+    elif system.startswith("onnx-"):
+        from src.onnx_translator import OnnxTranslator
+
+        translator = OnnxTranslator.from_pretrained(model, precision=system.removeprefix("onnx-"))
     else:
         from src.inference import Translator
 

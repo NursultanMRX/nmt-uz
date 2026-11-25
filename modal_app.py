@@ -35,7 +35,8 @@ def _with_code(img: modal.Image) -> modal.Image:
 base_image = modal.Image.debian_slim(python_version="3.11").uv_sync()
 image = _with_code(base_image)
 # NLLB only matters for the benchmark; keep it out of the training image.
-bench_image = _with_code(base_image.uv_pip_install("transformers"))
+bench_image = _with_code(base_image.uv_pip_install("transformers", "onnx", "onnxruntime",
+                                                   "onnxscript"))
 # int8 / int4 rows of the efficiency table
 quant_image = _with_code(base_image.uv_pip_install("transformers", "accelerate", "bitsandbytes"))
 # unbabel-comet pins an older huggingface-hub, which drags torch back to 1.x inside our
@@ -97,43 +98,77 @@ def backtranslate_remote(run: str, mono: str, lang: str, out: str, limit: int):
     data_vol.commit()
 
 
-@app.function(image=bench_image, gpu="T4", memory=16 * 1024, timeout=2 * 60 * 60,
-              volumes={"/data": data_vol, "/ckpt": ckpt_vol}, secrets=[hf_secret])
-def benchmark_remote(system: str, run: str, split: str, beam: int):
-    import json
+def _model(system: str, run: str) -> str:
+    """Our release on the volume (exported on first use), or the baseline's hub name."""
     from pathlib import Path
 
     from src.benchmark import SYSTEMS
-    from src.benchmark import run as run_benchmark
-    from src.export import export
 
-    model = SYSTEMS[system][2]
-    if system == "ours":
-        model = f"{CKPT}/{run}/release"
-        if not Path(model).exists():
-            export(f"{CKPT}/{run}/best.pt", f"{DATA}/spm/spm.model", model)
-    result = run_benchmark(system, model, split, Path(f"{CKPT}/{run}/benchmark"), beam,
-                           comet=comet_remote.remote)
+    if system != "ours" and not system.startswith("onnx-"):
+        return SYSTEMS[system][2]
+    release = Path(f"{CKPT}/{run}/release")
+    if not release.exists():
+        from src.export import export
+
+        export(f"{CKPT}/{run}/best.pt", f"{DATA}/spm/spm.model", release)
+    if system.startswith("onnx-") and not (release / "onnx").exists():
+        from src.onnx_export import export_onnx
+
+        export_onnx(release, release)
+    ckpt_vol.commit()
+    return str(release)
+
+
+@app.function(image=bench_image, cpu=4, memory=16 * 1024, timeout=60 * 60,
+              volumes={"/data": data_vol, "/ckpt": ckpt_vol})
+def onnx_export_remote(run: str) -> list[str]:
+    import shutil
+    from pathlib import Path
+
+    shutil.rmtree(Path(f"{CKPT}/{run}/release/onnx"), ignore_errors=True)
+    out = Path(_model("onnx-fp32", run)) / "onnx"
+    return [f"{f.name} {f.stat().st_size / 2**20:.1f} MB" for f in sorted(out.glob("*.onnx"))]
+
+
+def _benchmark(system: str, run: str, split: str, beam: int):
+    import json
+    from pathlib import Path
+
+    from src.benchmark import run as run_benchmark
+
+    result = run_benchmark(system, _model(system, run), split,
+                           Path(f"{CKPT}/{run}/benchmark"), beam, comet=comet_remote.remote)
     ckpt_vol.commit()
     print(json.dumps(result, indent=2))
 
 
+@app.function(image=bench_image, gpu="T4", memory=16 * 1024, timeout=2 * 60 * 60,
+              volumes={"/data": data_vol, "/ckpt": ckpt_vol}, secrets=[hf_secret])
+def benchmark_remote(system: str, run: str, split: str, beam: int):
+    _benchmark(system, run, split, beam)
+
+
+@app.function(image=bench_image, cpu=8, memory=16 * 1024, timeout=4 * 60 * 60,
+              volumes={"/data": data_vol, "/ckpt": ckpt_vol}, secrets=[hf_secret])
+def benchmark_cpu_remote(system: str, run: str, split: str, beam: int):
+    """The ONNX variants run on onnxruntime's CPU provider; a GPU would sit idle."""
+    _benchmark(system, run, split, beam)
+
+
 def _latency(system: str, run: str, device: str, threads: int | None = None) -> dict:
-    from src.benchmark import SYSTEMS
     from src.latency import run as run_latency
 
-    model = f"{CKPT}/{run}/release" if system == "ours" else SYSTEMS[system][2]
-    return run_latency(system, model, device, threads=threads)
+    return run_latency(system, _model(system, run), device, threads=threads)
 
 
 @app.function(image=bench_image, cpu=4, memory=16 * 1024, timeout=2 * 60 * 60,
-              volumes={"/ckpt": ckpt_vol}, secrets=[hf_secret])
+              volumes={"/data": data_vol, "/ckpt": ckpt_vol}, secrets=[hf_secret])
 def latency_cpu(system: str, run: str) -> dict:
     return _latency(system, run, "cpu", threads=4)
 
 
 @app.function(image=bench_image, gpu="T4", memory=16 * 1024, timeout=60 * 60,
-              volumes={"/ckpt": ckpt_vol}, secrets=[hf_secret])
+              volumes={"/data": data_vol, "/ckpt": ckpt_vol}, secrets=[hf_secret])
 def latency_gpu(system: str, run: str) -> dict:
     return _latency(system, run, "cuda")
 
@@ -185,7 +220,15 @@ def evaluate(run: str = "base", split: str = "devtest", beam: int = 5,
 
 @app.local_entrypoint()
 def benchmark(system: str = "ours", run: str = "base", split: str = "devtest", beam: int = 5):
-    benchmark_remote.remote(system, run, split, beam)
+    remote = benchmark_cpu_remote if system.startswith("onnx-") else benchmark_remote
+    remote.remote(system, run, split, beam)
+
+
+@app.local_entrypoint()
+def onnx(run: str = "base"):
+    """(Re)export release/onnx on the volume; the ONNX benchmarks then reuse it."""
+    for line in onnx_export_remote.remote(run):
+        print(line)
 
 
 @app.local_entrypoint()
@@ -193,8 +236,10 @@ def latency(systems: str = "ours,nllb", run: str = "base", out: str = "results/l
     import json
     from pathlib import Path
 
+    # the ONNX variants are measured on CPU only (onnxruntime's CPU package)
     calls = [(s, d, fn.spawn(s, run)) for s in systems.split(",")
-             for d, fn in (("cpu", latency_cpu), ("cuda", latency_gpu))]
+             for d, fn in (("cpu", latency_cpu), ("cuda", latency_gpu))
+             if d == "cpu" or not s.startswith("onnx-")]
     Path(out).mkdir(parents=True, exist_ok=True)
     for system, device, call in calls:
         result = call.get()

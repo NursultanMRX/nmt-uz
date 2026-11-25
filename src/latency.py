@@ -36,12 +36,19 @@ def measure(translate: Callable, sentences: list[str], target: str, beam: int,
             "batch_ms_per_sentence": round(batch, 1), "sentences": len(sentences)}
 
 
-def load_system(system: str, model: str, device: str) -> Callable:
+def load_system(system: str, model: str, device: str, threads: int | None = None) -> Callable:
     if system.startswith("nllb"):
         from src.benchmark import NLLB
 
         nllb = NLLB.from_pretrained(model, device)
         return lambda texts, target, beam: nllb.translate(texts, target, beam=beam)
+    if system.startswith("onnx-"):
+        from src.onnx_translator import OnnxTranslator
+
+        providers = ["CUDAExecutionProvider"] if device == "cuda" else None
+        tr = OnnxTranslator.from_pretrained(model, system.removeprefix("onnx-"), providers,
+                                            threads)
+        return lambda texts, target, beam: tr.translate(texts, target=target, beam=beam)
     from src.inference import Translator
 
     tr = Translator.from_pretrained(model, device=device)
@@ -54,7 +61,7 @@ def run(system: str, model: str, device: str, n: int = 100, threads: int | None 
     if threads:
         torch.set_num_threads(threads)
     rows = load_flores("devtest")[:n]
-    translate = load_system(system, model, device)
+    translate = load_system(system, model, device, threads)
     hardware = torch.cuda.get_device_name() if device == "cuda" else f"CPU x{torch.get_num_threads()}"
     result = {"system": system, "device": device, "hardware": hardware}
     for beam in (4, 1):
