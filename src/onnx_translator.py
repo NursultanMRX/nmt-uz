@@ -98,8 +98,11 @@ class OnnxTranslator:
             logp = np.where(finished[:, None], done_row, logp)
 
             cand = (scores[:, None] + logp).reshape(b, k * vocab)
-            idx = np.argsort(-cand, axis=1, kind="stable")[:, :k]
+            # top-k without sorting all k * vocab candidates: partition, then sort the k
+            idx = np.argpartition(-cand, k - 1, axis=1)[:, :k]
             top = np.take_along_axis(cand, idx, axis=1)
+            order = np.argsort(-top, axis=1, kind="stable")
+            idx, top = np.take_along_axis(idx, order, 1), np.take_along_axis(top, order, 1)
             sel = (offsets + idx // vocab).reshape(-1)
             tok = (idx % vocab).reshape(-1)
 
