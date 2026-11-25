@@ -3,7 +3,8 @@ import pytest
 from src.data_pipeline.alphabet import to_old_latin
 from src.evaluation.evaluate import translate as beam_translate
 from src.export import export
-from src.inference import Translator, split_emoji, split_long
+from src.inference import Translator
+from src.text import split_emoji, split_long
 
 
 @pytest.fixture
@@ -65,7 +66,7 @@ def test_split_long_at_punctuation_then_words():
 def test_long_sentence_is_translated_in_pieces(translator, monkeypatch):
     pieces = ["the good school in the city,", "a book about the morning"]
     limit = max(len(ids) for ids in translator.tok.encode(pieces))  # each piece fits, both do not
-    monkeypatch.setattr("src.inference.MAX_SOURCE_TOKENS", limit)
+    monkeypatch.setattr("src.text.MAX_SOURCE_TOKENS", limit)
     joined = translator.translate(" ".join(pieces), "uz")
     assert joined == " ".join(translator.translate(pieces, "uz"))
 

@@ -8,19 +8,15 @@ import re
 from collections.abc import Iterable, Iterator
 from pathlib import Path
 
-from src.data_pipeline.cleaning import hash64, near_key, normalize_en, normalize_uz
+from src.data_pipeline.cleaning import hash64, near_key
+from src.text import normalize_en, normalize_uz, split_sentences
 
 MONO = {
     "uz": ("HuggingFaceFW/fineweb-2", "uzn_Latn"),
     "en": ("HuggingFaceFW/fineweb-edu", "sample-10BT"),
 }
 
-_SENT_END = re.compile(r"(?<=[.!?…])\s+(?=[\"“«(]?[A-ZĞÖŞÇ0-9])")
 _URLISH = re.compile(r"https?://|www\.|@|\.(com|uz|ru|org)\b")
-
-
-def split_sentences(text: str) -> list[str]:
-    return [s.strip() for line in text.splitlines() for s in _SENT_END.split(line) if s.strip()]
 
 
 def good_sentence(s: str, min_words: int = 5, max_words: int = 50) -> bool:

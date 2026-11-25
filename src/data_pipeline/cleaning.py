@@ -6,25 +6,14 @@ Filtering is per row and runs in worker processes. De-duplication works on
 
 import hashlib
 import re
-import unicodedata
 from collections.abc import Iterable
 
 import polars as pl
 
-from src.data_pipeline.alphabet import to_new_latin
+from src.text import normalize_en, normalize_uz
 
-_WS = re.compile(r"\s+")
 _NON_WORD = re.compile(r"[\W_]+")
 _MARKUP = re.compile(r"<[^>]{1,40}>|&[a-z]+;|&#\d+;")
-
-
-def normalize_en(text: str) -> str:
-    return _WS.sub(" ", unicodedata.normalize("NFKC", text)).strip()
-
-
-def normalize_uz(text: str) -> str:
-    return _WS.sub(" ", to_new_latin(text)).strip()
-
 
 def near_key(text: str) -> str:
     return _NON_WORD.sub("", text.lower())
