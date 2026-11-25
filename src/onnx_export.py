@@ -135,11 +135,19 @@ def _convert(fp32: Path, out: Path, variant: str) -> None:
     elif variant == "int8":
         from onnxruntime.quantization import QuantType, quantize_dynamic
 
-        quantize_dynamic(fp32, out, weight_type=QuantType.QInt8, op_types_to_quantize=["MatMul"])
+        # Gather too: the embedding table is a fifth of the model and would stay fp32
+        quantize_dynamic(fp32, out, weight_type=QuantType.QInt8,
+                         op_types_to_quantize=["MatMul", "Gather"])
     elif variant == "int4":
         from onnxruntime.quantization.matmul_nbits_quantizer import MatMulNBitsQuantizer
 
-        quant = MatMulNBitsQuantizer(onnx.load(fp32), block_size=32, is_symmetric=True)
+        # Quantizing Gather raises the opset to 21 without upgrading the other ops; do it first.
+        from onnx import version_converter
+
+        model = version_converter.convert_version(onnx.load(fp32), 21)
+        quant = MatMulNBitsQuantizer(model, block_size=32, is_symmetric=True,
+                                     op_types_to_quantize=("MatMul", "Gather"),
+                                     quant_axes=(("MatMul", 0), ("Gather", 1)))
         quant.process()
         quant.model.save_model_to_file(str(out), use_external_data_format=False)
     else:
