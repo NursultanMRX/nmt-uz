@@ -14,3 +14,6 @@ specs/
 # Hugging Face model card, Space and push scripts live outside the public repo
 hf/
 release/
+
+# Article and post drafts stay local
+docs/blog/
