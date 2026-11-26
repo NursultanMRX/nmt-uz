@@ -105,11 +105,15 @@ def comet_scorer(batch_size: int = 64) -> Callable[[list, list, list], list[floa
     return score
 
 
+def writes_2026(system: str) -> bool:
+    return system == "ours" or system.startswith("onnx-")
+
+
 def score_all(system: str, rows: list[dict], hyps: dict[str, list[str]],
               subsets: dict[str, int | None] = SUBSETS, comet=None) -> dict:
     en, uz = [r["en"] for r in rows], [r["uz"] for r in rows]
     uz_new = [normalize_uz(t) for t in uz]
-    if system == "ours" or system.startswith("onnx-"):
+    if writes_2026(system):
         en2uz_old, en2uz_new = to_reference_script(hyps["en2uz"], uz), hyps["en2uz"]
     else:
         en2uz_old, en2uz_new = hyps["en2uz"], [normalize_uz(h) for h in hyps["en2uz"]]

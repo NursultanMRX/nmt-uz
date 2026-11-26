@@ -12,6 +12,7 @@ Typical flow:
     modal run modal_app.py::benchmark --system nllb                    # NLLB-600M baseline
     modal run modal_app.py::benchmark --system nllb-1.3b
     modal run modal_app.py::benchmark --system ours --run base         # + COMET, old-alphabet track
+    modal run modal_app.py::significance                               # bootstrap CIs, p-values
     modal run modal_app.py::latency                                    # CPU and T4, ours vs NLLB
     modal run --detach modal_app.py::efficiency                        # fp32/fp16/int8/int4 sweep
     modal volume get nmt-ckpt runs/base/efficiency results/            # its results, any time later
@@ -199,6 +200,32 @@ def comet_remote(src: list[str], mt: list[str], ref: list[str]) -> list[float]:
     return list(comet_scorer()(src, mt, ref))
 
 
+@app.function(image=bench_image, cpu=4, memory=16 * 1024, timeout=60 * 60,
+              secrets=[hf_secret])
+def significance_remote(hyps: dict[str, dict[str, list[str]]], split: str) -> dict:
+    from src.benchmark import to_reference_script, writes_2026
+    from src.data_pipeline.sources import load_flores
+    from src.significance import compare, render_markdown
+
+    rows = load_flores(split)
+    en, uz = [r["en"] for r in rows], [r["uz"] for r in rows]
+    refs, srcs = {"en2uz": uz, "uz2en": en}, {"en2uz": en, "uz2en": uz}
+    systems = {s: {"en2uz": to_reference_script(h["en2uz"], uz) if writes_2026(s) else h["en2uz"],
+                   "uz2en": h["uz2en"]} for s, h in hyps.items()}
+    # one COMET call for every system and direction, so the model loads once
+    keys = [(s, d) for s in systems for d in refs]
+    seg = comet_remote.remote([x for s, d in keys for x in srcs[d]],
+                              [x for s, d in keys for x in systems[s][d]],
+                              [x for s, d in keys for x in refs[d]])
+    n, comet = len(rows), {}
+    for i, (s, d) in enumerate(keys):
+        comet.setdefault(s, {})[d] = seg[i * n : (i + 1) * n]
+    result = compare(systems, refs, comet=comet)
+    names = {"ours": "nmt-uz-76m", "nllb": "NLLB-200-distilled-600M",
+             "nllb-1.3b": "NLLB-200-distilled-1.3B"}
+    return {"result": result, "markdown": render_markdown(result, names)}
+
+
 @app.local_entrypoint()
 def build(args: str = ""):
     build_corpus.remote(args)
@@ -265,6 +292,22 @@ def efficiency(systems: str = "ours,nllb", precisions: str = "fp32,fp16,int8,int
         Path(out, f"{system}_{precision}.json").write_text(json.dumps(result, indent=2))
         print(f"{system} {precision} done: {json.dumps(result['seconds'])}")
     print(f"python -m src.efficiency --table {out}")
+
+
+@app.local_entrypoint()
+def significance(systems: str = "ours,nllb,nllb-1.3b", split: str = "devtest",
+                 hyps_dir: str = "results/benchmark", out: str = "results/significance"):
+    """Bootstrap CIs and p-values from the saved benchmark translations."""
+    import json
+    from pathlib import Path
+
+    hyps = {s: {d: Path(hyps_dir, f"{s}_{split}.{d}.txt").read_text(encoding="utf-8")
+                .splitlines() for d in ("en2uz", "uz2en")} for s in systems.split(",")}
+    res = significance_remote.remote(hyps, split)
+    Path(out).mkdir(parents=True, exist_ok=True)
+    Path(out, f"{split}.json").write_text(json.dumps(res["result"], indent=2))
+    Path(out, f"{split}.md").write_text(res["markdown"], encoding="utf-8")
+    print(res["markdown"])
 
 
 @app.local_entrypoint()
