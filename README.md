@@ -31,6 +31,23 @@ English → Uzbek beats both NLLB-200 models on BLEU and chrF at 8× and 17× fe
 Uzbek → English is still behind: writing English is where large multilingual models gain
 the most from their size.
 
+**Is the difference real?** Paired bootstrap resampling [5], 1000 samples, gives
+Δ = nmt-uz-76m minus NLLB, its 95% confidence interval and p
+([src/significance.py](src/significance.py),
+[results/significance](results/significance/devtest.md)):
+
+| nmt-uz-76m vs | Direction | Δ BLEU | Δ chrF | Δ COMET |
+|---|---|---:|---:|---:|
+| NLLB-600M | en→uz | +4.99 [+4.16, +5.82] | +4.73 [+4.03, +5.39] | +0.005 [+0.000, +0.009], p=0.015 |
+| NLLB-600M | uz→en | −3.63 [−4.56, −2.78] | −2.48 [−3.12, −1.90] | −0.026 [−0.030, −0.022] |
+| NLLB-1.3B | en→uz | +2.71 [+1.87, +3.53] | +1.81 [+1.17, +2.43] | −0.014 [−0.018, −0.011] |
+| NLLB-1.3B | uz→en | −6.91 [−7.97, −5.88] | −5.14 [−5.83, −4.50] | −0.043 [−0.047, −0.039] |
+
+Every difference is significant at p < 0.001 except English → Uzbek COMET against NLLB-600M,
+which is small and only just significant (p = 0.015). The English → Uzbek lead in BLEU and
+chrF holds against both models; against NLLB-1.3B, COMET goes the other way. A single score
+on this test set is uncertain by about ±0.8 BLEU and ±0.7 chrF.
+
 The chart adds two systems that only publish scores on the first 200 devtest sentences
 ([OvozifyLabs card](https://huggingface.co/OvozifyLabs/nllb-200-uz-en-v1#benchmark-results)),
 so every row in it is scored on that subset. Our Uzbek output is converted to the 1995
@@ -255,6 +272,7 @@ src/models/          the Transformer
 src/training/        token-budget batching, stable cross-entropy, trainer
 src/evaluation/      beam search translation, BLEU / chrF++
 src/benchmark.py     FLORES+ comparison with NLLB-200, COMET
+src/significance.py  paired bootstrap: confidence intervals and p-values
 src/export.py        checkpoint -> safetensors release
 src/inference.py     Translator
 src/onnx_export.py   release -> ONNX encoder and decoder, fp32 / fp16 / int8 / int4
@@ -280,6 +298,7 @@ results/             data statistics, training metrics, benchmark outputs
 2. NLLB Team (2022). *No Language Left Behind: Scaling Human-Centered Machine Translation.* [arXiv:2207.04672](https://arxiv.org/abs/2207.04672)
 3. Hu et al. (2024). *MiniCPM: Unveiling the Potential of Small Language Models with Scalable Training Strategies* (warmup-stable-decay schedule). [arXiv:2404.06395](https://arxiv.org/abs/2404.06395)
 4. Barron, Gnanapragasam & Tschannen (2026). *A Fix for Softmax and Cross-Entropy* (the training loss). [arXiv:2610.31642](https://arxiv.org/abs/2610.31642)
+5. Koehn (2004). *Statistical Significance Tests for Machine Translation Evaluation* (paired bootstrap). [ACL Anthology W04-3250](https://aclanthology.org/W04-3250/)
 
 ## License
 
