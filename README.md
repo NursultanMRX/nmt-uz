@@ -237,6 +237,7 @@ embeddings, 16k shared SentencePiece vocabulary. Direction is a target tag, `<2u
 
 **Training** (`configs/base.yaml`, `src/training/trainer.py`):
 
+- every pair trains both directions, English → Uzbek and Uzbek → English;
 - token-budget batches of 12k tokens, 2 accumulated per step, fp16 with the loss in fp32;
 - warmup-stable-decay schedule: 4k warmup, flat 7e-4, linear decay over the last 10%;
 - during the decay 70% of batches come from the 1.16M clean pairs (TED, Wikipedia,
@@ -245,6 +246,10 @@ embeddings, 16k shared SentencePiece vocabulary. Direction is a target tag, `<2u
   which keeps gradients alive for confident tokens under fp16;
 - best checkpoint by mean chrF++ on FLORES+ dev; preempted GPUs resume from the last
   500-step checkpoint with the RNG state restored.
+
+v1.0.0 uses real parallel data only. [Tagged back-translation](https://arxiv.org/abs/1906.06442) (Caswell et al., 2019) is
+implemented in `src/backtranslate.py`, and the tokenizer reserves a `<bt>` tag for it, but it
+is not part of this release; the synthetic pairs would go into `data.extra` in the config.
 
 ## Reproduce
 
@@ -273,6 +278,7 @@ src/training/        token-budget batching, stable cross-entropy, trainer
 src/evaluation/      beam search translation, BLEU / chrF++
 src/benchmark.py     FLORES+ comparison with NLLB-200, COMET
 src/significance.py  paired bootstrap: confidence intervals and p-values
+src/backtranslate.py tagged back-translation (not used in v1.0.0)
 src/export.py        checkpoint -> safetensors release
 src/inference.py     Translator
 src/onnx_export.py   release -> ONNX encoder and decoder, fp32 / fp16 / int8 / int4
