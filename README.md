@@ -7,7 +7,7 @@ trained from scratch on a single T4 GPU. Uzbek is written in
 the **2026 Latin alphabet** (ğ, ö, ş, ç) on both input and output; old Latin and Cyrillic
 input is converted automatically, and output can be mapped back to the 1995 alphabet.
 
-**Model:** [nickoo004/nmt-uz-76m](https://huggingface.co/nickoo004/nmt-uz-76m) · **Live demo:** [nmt-uz-demo](https://huggingface.co/spaces/nickoo004/nmt-uz-demo)
+**Model:** [nickoo004/nmt-uz-76m](https://huggingface.co/nickoo004/nmt-uz-76m) · **Live demo:** [nmt-uz-demo](https://huggingface.co/spaces/nickoo004/nmt-uz-demo) · **Article:** [how it was built](https://huggingface.co/blog/nickoo004/nmt-uz-76m)
 
 ```bash
 docker build -t nmt-uz .
