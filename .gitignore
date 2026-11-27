@@ -17,3 +17,6 @@ release/
 
 # Article and post drafts stay local
 docs/blog/
+
+# Technical report, committed once it is submitted
+paper/
