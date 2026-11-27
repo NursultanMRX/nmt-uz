@@ -1,9 +1,11 @@
 """README figures from the files in results/, in light and dark variants.
 
     uv run python scripts/figures.py            # writes docs/img/*.svg
+    uv run python scripts/figures.py --paper    # writes paper/figures/*.pdf, light, untitled
 """
 
 import json
+import sys
 from pathlib import Path
 
 import matplotlib as mpl
@@ -24,10 +26,11 @@ THEMES = {
 }
 
 
-def _style(t: dict) -> None:
+def _style(t: dict, paper: bool = False) -> None:
     mpl.rcParams.update({
-        "font.family": ["Segoe UI", "DejaVu Sans"],
+        "font.family": ["DejaVu Sans"] if paper else ["Segoe UI", "DejaVu Sans"],
         "font.size": 10.5,
+        "pdf.fonttype": 42,  # TrueType in the PDF, not Type 3
         "svg.fonttype": "path",  # glyphs as paths: renders the same on GitHub and HF
         "figure.facecolor": t["surface"], "axes.facecolor": t["surface"],
         "savefig.facecolor": t["surface"], "text.color": t["ink"],
@@ -42,10 +45,13 @@ def _title(fig, title: str, subtitle: str, t: dict) -> None:
     fig.text(0.02, 0.905, subtitle, fontsize=10, va="top", color=t["ink2"])
 
 
-def _save(fig, name: str, mode: str) -> None:
-    OUT.mkdir(parents=True, exist_ok=True)
-    suffix = "" if mode == "light" else "-dark"
-    fig.savefig(OUT / f"{name}{suffix}.svg", bbox_inches="tight", pad_inches=0.15)
+def _save(fig, out: Path, name: str, mode: str, paper: bool) -> None:
+    out.mkdir(parents=True, exist_ok=True)
+    if paper:
+        fig.savefig(out / f"{name}.pdf", bbox_inches="tight", pad_inches=0.03)
+    else:
+        suffix = "" if mode == "light" else "-dark"
+        fig.savefig(out / f"{name}{suffix}.svg", bbox_inches="tight", pad_inches=0.15)
     plt.close(fig)
 
 
@@ -57,14 +63,15 @@ def load_metrics(path: Path) -> tuple[dict, dict]:
     return train, evals
 
 
-def training_curve(metrics: Path, mode: str) -> None:
+def training_curve(metrics: Path, mode: str, out: Path = OUT, paper: bool = False) -> None:
     t = THEMES[mode]
     _, evals = load_metrics(metrics)
     steps = sorted(evals)
-    fig, ax = plt.subplots(figsize=(8, 4.2))
-    fig.subplots_adjust(top=0.78)
-    _title(fig, "Translation quality during training",
-           "chrF++ on FLORES+ dev (500 sentences, beam 4), evaluated every 2k steps", t)
+    fig, ax = plt.subplots(figsize=(6.4, 3.2) if paper else (8, 4.2))
+    if not paper:
+        fig.subplots_adjust(top=0.78)
+        _title(fig, "Translation quality during training",
+               "chrF++ on FLORES+ dev (500 sentences, beam 4), evaluated every 2k steps", t)
 
     for lo, hi, label in ((0, 4000, "warmup"), (45000, 50000, "decay + clean data")):
         ax.axvspan(lo, hi, color=t["band"], lw=0, zorder=0)
@@ -86,10 +93,10 @@ def training_curve(metrics: Path, mode: str) -> None:
     ax.grid(axis="y", color=t["grid"], lw=0.8)
     ax.tick_params(length=0)
     ax.legend(loc="lower right", frameon=False, labelcolor=t["ink2"])
-    _save(fig, "training_curve", mode)
+    _save(fig, out, "training_curve", mode, paper)
 
 
-def data_funnel(stats: Path, mode: str) -> None:
+def data_funnel(stats: Path, mode: str, out: Path = OUT, paper: bool = False) -> None:
     t = THEMES[mode]
     s = json.loads(stats.read_text())
     src = s["sources"].values()
@@ -101,10 +108,11 @@ def data_funnel(stats: Path, mode: str) -> None:
     ]
     nllb = s["sources"]["nllb"]["dedup"]["kept"] / s["stores"]["train"]["pairs"]
 
-    fig, ax = plt.subplots(figsize=(8, 3.2))
-    fig.subplots_adjust(left=0.3, top=0.72)
-    _title(fig, "From 34M raw pairs to 26M training pairs",
-           f"{nllb:.0%} of the final pairs are web-mined NLLB bitext", t)
+    fig, ax = plt.subplots(figsize=(6.4, 2.2) if paper else (8, 3.2))
+    fig.subplots_adjust(left=0.3, top=0.95 if paper else 0.72)
+    if not paper:
+        _title(fig, "From 34M raw pairs to 26M training pairs",
+               f"{nllb:.0%} of the final pairs are web-mined NLLB bitext", t)
     labels, values = zip(*stages)
     y = range(len(stages))[::-1]
     ax.barh(y, values, color=t["ramp"], height=0.62, edgecolor=t["surface"], linewidth=2)
@@ -115,7 +123,7 @@ def data_funnel(stats: Path, mode: str) -> None:
     ax.xaxis.set_visible(False)
     ax.spines[["bottom", "left"]].set_visible(False)
     ax.tick_params(length=0)
-    _save(fig, "data_funnel", mode)
+    _save(fig, out, "data_funnel", mode, paper)
 
 
 def hero() -> None:
@@ -128,16 +136,20 @@ def hero() -> None:
     plt.imsave(OUT / "hero.jpg", img[top:top + w // 3], pil_kwargs={"quality": 90})
 
 
-def main() -> None:
+def main(paper: bool = False, out: Path | None = None) -> None:
+    out = out or (ROOT / "paper" / "figures" if paper else OUT)
     for mode, t in THEMES.items():
-        _style(t)
+        if paper and mode != "light":
+            continue
+        _style(t, paper)
         metrics = ROOT / "results" / "base" / "metrics.jsonl"
         if metrics.exists():
-            training_curve(metrics, mode)
-        data_funnel(ROOT / "results" / "data_stats.json", mode)
-    hero()
-    print(f"wrote {sorted(p.name for p in OUT.glob('*.svg'))}")
+            training_curve(metrics, mode, out, paper)
+        data_funnel(ROOT / "results" / "data_stats.json", mode, out, paper)
+    if not paper:
+        hero()
+    print(f"wrote {sorted(p.name for p in out.glob('*.pdf' if paper else '*.svg'))}")
 
 
 if __name__ == "__main__":
-    main()
+    main(paper="--paper" in sys.argv)

@@ -1,8 +1,10 @@
 """Architecture diagram of the model, drawn from its real config.
 
-    uv run python scripts/architecture.py       # writes docs/img/architecture.{png,svg}
+    uv run python scripts/architecture.py            # writes docs/img/architecture.{png,svg}
+    uv run python scripts/architecture.py --paper    # writes paper/figures/architecture.pdf
 """
 
+import sys
 from pathlib import Path
 
 import matplotlib as mpl
@@ -18,7 +20,8 @@ ENC_FILL, ENC_EDGE = "#9ec5f4", "#184f95"
 DEC_FILL, DEC_EDGE = "#f7c1a8", "#b9481c"
 TEXT, SMALL, HEAD = 15, 14.5, 19
 
-mpl.rcParams.update({"font.family": ["Segoe UI", "DejaVu Sans"], "svg.fonttype": "path"})
+mpl.rcParams.update({"font.family": ["Segoe UI", "DejaVu Sans"], "svg.fonttype": "path",
+                     "pdf.fonttype": 42})
 fig = plt.figure(figsize=(23.4, 13.7))
 ax = fig.add_axes((0, 0, 1, 1))
 ax.set_xlim(0, 234)
@@ -233,8 +236,10 @@ rich(192, 25, [("Shared embedding", INK)])
 rich(192, 21, [("16,384 × 640", BLUE)])
 dotted((dx + 15.5, 21), (191, 23))
 
+if "--paper" in sys.argv:
+    OUT = OUT.parents[1] / "paper" / "figures"
 OUT.mkdir(parents=True, exist_ok=True)
-for ext in ("png", "svg"):
+for ext in ("pdf",) if "--paper" in sys.argv else ("png", "svg"):
     fig.savefig(OUT / f"architecture.{ext}", dpi=130, facecolor=PAPER, bbox_inches="tight",
                 pad_inches=0.3)
-print("wrote", OUT / "architecture.png")
+print("wrote", OUT / "architecture.*")

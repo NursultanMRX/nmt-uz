@@ -1,12 +1,14 @@
 """Speed against quality for every precision of ours and NLLB-600M, one panel per direction.
 
-    uv run python scripts/speed_quality.py    # writes docs/img/speed_quality.{png,svg}
+    uv run python scripts/speed_quality.py            # writes docs/img/speed_quality.{png,svg}
+    uv run python scripts/speed_quality.py --paper    # writes paper/figures/speed_quality.pdf
 
 x is the fastest batch size of each variant (seconds for the whole devtest, both directions,
 beam 4, one T4); y is chrF of the batch-32 translations. Marker area follows the weight size.
 """
 
 import json
+import sys
 from pathlib import Path
 
 import matplotlib as mpl
@@ -33,20 +35,25 @@ def load_points(results: Path) -> list[dict]:
     return points
 
 
-def draw(points: list[dict], out: Path) -> None:
-    mpl.rcParams.update({"font.family": ["Segoe UI", "DejaVu Sans"], "svg.fonttype": "path"})
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6.4))
-    fig.subplots_adjust(left=0.07, right=0.98, top=0.76, bottom=0.13, wspace=0.18)
+def draw(points: list[dict], out: Path, paper: bool = False) -> None:
+    """paper=True: a plain white, untitled PDF for the report; the caption carries the title."""
+    mpl.rcParams.update({"font.family": ["DejaVu Sans"] if paper else ["Segoe UI", "DejaVu Sans"],
+                         "svg.fonttype": "path", "pdf.fonttype": 42})
+    # a smaller canvas for the paper: the text stays readable once scaled to the page width
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4.4) if paper else (14, 6.4))
+    fig.subplots_adjust(left=0.08, right=0.98, top=0.92 if paper else 0.76, bottom=0.14,
+                        wspace=0.2)
 
-    bg = fig.add_axes((0, 0, 1, 1), zorder=-1)
-    bg.imshow(np.linspace(0, 1, 256)[:, None], aspect="auto", extent=(0, 1, 0, 1),
-              cmap=LinearSegmentedColormap.from_list("bg", ["#ffffff", "#eef3fa"]))
-    bg.axis("off")
-    fig.text(0.035, 0.95, "Speed and quality, every precision", fontsize=24, weight="bold",
-             color=INK, va="top")
-    fig.text(0.035, 0.875, "Whole FLORES+ devtest, both directions, beam 4, one T4 · "
-             "fastest batch size of each variant · marker area = weight size", fontsize=13,
-             color=INK2, va="top")
+    if not paper:
+        bg = fig.add_axes((0, 0, 1, 1), zorder=-1)
+        bg.imshow(np.linspace(0, 1, 256)[:, None], aspect="auto", extent=(0, 1, 0, 1),
+                  cmap=LinearSegmentedColormap.from_list("bg", ["#ffffff", "#eef3fa"]))
+        bg.axis("off")
+        fig.text(0.035, 0.95, "Speed and quality, every precision", fontsize=24, weight="bold",
+                 color=INK, va="top")
+        fig.text(0.035, 0.875, "Whole FLORES+ devtest, both directions, beam 4, one T4 · "
+                 "fastest batch size of each variant · marker area = weight size", fontsize=13,
+                 color=INK2, va="top")
 
     for ax, (direction, title) in zip(axes, PANELS):
         for system, (name, color) in STYLE.items():
@@ -85,11 +92,13 @@ def draw(points: list[dict], out: Path) -> None:
     axes[0].legend(handles=handles, loc="center right", frameon=False, fontsize=11.5)
 
     out.mkdir(parents=True, exist_ok=True)
-    for ext in ("png", "svg"):
+    for ext in ("pdf",) if paper else ("png", "svg"):
         fig.savefig(out / f"speed_quality.{ext}", dpi=130)
     plt.close(fig)
 
 
 if __name__ == "__main__":
-    draw(load_points(ROOT / "results" / "efficiency"), ROOT / "docs" / "img")
-    print("wrote docs/img/speed_quality.png")
+    paper = "--paper" in sys.argv
+    out = ROOT / "paper" / "figures" if paper else ROOT / "docs" / "img"
+    draw(load_points(ROOT / "results" / "efficiency"), out, paper)
+    print("wrote", out / ("speed_quality.pdf" if paper else "speed_quality.png"))
