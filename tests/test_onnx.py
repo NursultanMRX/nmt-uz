@@ -67,6 +67,44 @@ def test_reduced_precision_stays_close_to_fp32(release, precision, tol):
     assert isinstance(low.translate("good morning", "uz"), str)
 
 
+@pytest.mark.parametrize("beam", [1, 4])
+def test_trace_output_matches_translate(release, beam):
+    tr = OnnxTranslator.from_pretrained(release, precision="fp32")
+    for text in ["good morning", "hello world city"]:
+        assert tr.trace(text, "uz", beam=beam)["output"] == tr.translate(text, "uz", beam=beam)
+    assert tr.trace("Ўзбекистон шаҳар", "en")["output"] == tr.translate("Ўзбекистон шаҳар", "en")
+
+
+def test_trace_steps_rebuild_the_output(release):
+    tr = OnnxTranslator.from_pretrained(release, precision="fp32")
+    t = tr.trace("hello world city", "uz", beam=4)
+    assert t["tag"] == "<2uz>" and t["n_enc"] == 1 and t["n_dec"] == 1
+    assert t["src_pieces"] and t["steps"]
+    assert tr.tok.sp.decode_pieces([s["piece"] for s in t["steps"] if s["piece"] != "</s>"]) \
+        == t["output"]
+    for step in t["steps"]:
+        probs = [p for _, p in step["top"]]
+        assert len(probs) == 5 and probs == sorted(probs, reverse=True)
+        assert all(0.0 <= p <= 1.0 for p in probs)
+    assert set(t["timing_ms"]) == {"tokenize", "encode", "decode", "total"}
+
+
+def test_trace_reports_normalization(release):
+    tr = OnnxTranslator.from_pretrained(release, precision="fp32")
+    cyr = tr.trace("Ўзбекистон шаҳар", "en")
+    assert cyr["changed"] and cyr["original"] == "Ўзбекистон шаҳар"
+    assert cyr["normalized"] == "Özbekiston şahar"
+    assert not tr.trace("good morning", "uz")["changed"]
+    assert tr.trace("Hello. Good morning", "uz")["more"]
+    assert not tr.trace("good morning", "uz")["more"]
+
+
+def test_trace_old_script_output(release):
+    tr = OnnxTranslator.from_pretrained(release, precision="fp32")
+    assert tr.trace("good morning", "uz", script="old")["output"] == \
+        tr.translate("good morning", "uz", script="old")
+
+
 def test_runtime_does_not_need_torch(release):
     code = (
         "import sys; sys.modules['torch'] = None\n"

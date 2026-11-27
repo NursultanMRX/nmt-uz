@@ -31,6 +31,31 @@ def normalize_uz(text: str) -> str:
     return _WS.sub(" ", to_new_latin(text)).strip()
 
 
+_CYRILLIC = re.compile("[Ѐ-ӿ]")
+# oʻ/gʻ in any apostrophe (but not English "dog's", "go'd"), or q before a letter other than u
+_UZ_LETTERS = re.compile(r"[ğöşç]|[go]['ʼ’`‘ʻ](?!(?:s|t|d|m|ll|re|ve)\b)(?=\w)|q(?=[^\Wu\d_])",
+                         re.IGNORECASE)
+_WORD = re.compile(r"[^\W\d_]+")
+_UZ_WORDS = {"va", "bu", "men", "sen", "biz", "siz", "ular", "uchun", "bilan", "emas", "ham",
+             "edi", "juda", "bor", "yoq", "kerak", "bugun", "nima", "salom", "rahmat", "assalomu",
+             "alaykum", "xayr", "yaxshi", "yaxşi", "kitob", "havo", "qanday"}
+_EN_WORDS = {"the", "a", "an", "and", "is", "are", "was", "were", "of", "to", "in", "on", "for",
+             "with", "you", "your", "i", "it", "this", "that", "what", "how", "please", "my",
+             "me", "be", "have", "by", "at", "about", "hello", "hi", "thanks", "thank", "good"}
+
+
+def detect_target(text: str) -> str | None:
+    """Target language for an input: "en" for Uzbek text, "uz" for English, None if unclear."""
+    if _CYRILLIC.search(text) or _UZ_LETTERS.search(text):
+        return "en"
+    words = [w.lower() for w in _WORD.findall(text)]
+    uz = sum(w in _UZ_WORDS for w in words)
+    en = sum(w in _EN_WORDS for w in words)
+    if uz == en:
+        return None
+    return "en" if uz > en else "uz"
+
+
 def split_sentences(text: str) -> list[str]:
     return [s.strip() for line in text.splitlines() for s in _SENT_END.split(line) if s.strip()]
 
