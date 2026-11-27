@@ -7,7 +7,7 @@ trained from scratch on a single T4 GPU. Uzbek is written in
 the **2026 Latin alphabet** (ğ, ö, ş, ç) on both input and output; old Latin and Cyrillic
 input is converted automatically, and output can be mapped back to the 1995 alphabet.
 
-**Model:** [nickoo004/nmt-uz-76m](https://huggingface.co/nickoo004/nmt-uz-76m) · **Live demo:** [nmt-uz-demo](https://huggingface.co/spaces/nickoo004/nmt-uz-demo) · **Article:** [how it was built](https://huggingface.co/blog/nickoo004/nmt-uz-76m)
+**Model:** [nickoo004/nmt-uz-76m](https://huggingface.co/nickoo004/nmt-uz-76m) · **Live demo:** [nmt-uz-demo](https://huggingface.co/spaces/nickoo004/nmt-uz-demo) · **Article:** [how it was built](https://huggingface.co/blog/nickoo004/nmt-uz-76m) · **Paper:** [technical report](https://doi.org/10.5281/zenodo.24584898)
 
 ```bash
 docker build -t nmt-uz .
@@ -305,6 +305,22 @@ results/             data statistics, training metrics, benchmark outputs
 3. Hu et al. (2024). *MiniCPM: Unveiling the Potential of Small Language Models with Scalable Training Strategies* (warmup-stable-decay schedule). [arXiv:2404.06395](https://arxiv.org/abs/2404.06395)
 4. Barron, Gnanapragasam & Tschannen (2026). *A Fix for Softmax and Cross-Entropy* (the training loss). [arXiv:2610.31642](https://arxiv.org/abs/2610.31642)
 5. Koehn (2004). *Statistical Significance Tests for Machine Translation Evaluation* (paired bootstrap). [ACL Anthology W04-3250](https://aclanthology.org/W04-3250/)
+
+## Citation
+
+The technical report is on Zenodo:
+[doi.org/10.5281/zenodo.24584898](https://doi.org/10.5281/zenodo.24584898).
+
+```bibtex
+@misc{koshekbaev2026nmtuz,
+  author    = {Koshekbaev, Nursultan},
+  title     = {nmt-uz-76m: A Compact English--Uzbek Translation Model for the 2026 Latin Alphabet},
+  year      = {2026},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.24584898},
+  url       = {https://doi.org/10.5281/zenodo.24584898}
+}
+```
 
 ## License
 
