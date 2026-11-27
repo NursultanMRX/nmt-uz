@@ -25,7 +25,8 @@ MAX_RATIO = 3  # same cap as src.inference: longer output is a decoding loop
 
 class OnnxTranslator:
     def __init__(self, path: str | Path, precision: str = "int8",
-                 providers: list[str] | None = None, threads: int | None = None):
+                 providers: list[str] | None = None, threads: int | None = None,
+                 spinning: bool = True):
         path, suffix = Path(path), SUFFIXES[precision]
         cfg = json.loads((path / "config.json").read_text())["model"]
         self.max_len, self.n_layers = cfg["max_len"], cfg["dec_layers"]
@@ -35,6 +36,8 @@ class OnnxTranslator:
         options = ort.SessionOptions()
         if threads:
             options.intra_op_num_threads = threads
+        if not spinning:  # idle worker threads sleep instead of busy-waiting on a shared CPU
+            options.add_session_config_entry("session.intra_op.allow_spinning", "0")
         providers = providers or ["CPUExecutionProvider"]
         self.encoder, self.decoder = (
             ort.InferenceSession(str(path / "onnx" / f"{name}_model{suffix}.onnx"), options,
@@ -45,8 +48,8 @@ class OnnxTranslator:
 
     @classmethod
     def from_pretrained(cls, name_or_path: str | Path, precision: str = "int8",
-                        providers: list[str] | None = None,
-                        threads: int | None = None) -> "OnnxTranslator":
+                        providers: list[str] | None = None, threads: int | None = None,
+                        spinning: bool = True) -> "OnnxTranslator":
         path = Path(name_or_path)
         if not path.is_dir():
             from huggingface_hub import snapshot_download
@@ -55,7 +58,7 @@ class OnnxTranslator:
             files = ["config.json", "spm.model", f"onnx/encoder_model{suffix}.onnx",
                      f"onnx/decoder_model{suffix}.onnx"]
             path = Path(snapshot_download(str(name_or_path), allow_patterns=files))
-        return cls(path, precision, providers, threads)
+        return cls(path, precision, providers, threads, spinning)
 
     def _count(self, sentence: str) -> int:
         return len(self.tok.encode([sentence])[0])

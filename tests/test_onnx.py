@@ -105,6 +105,12 @@ def test_trace_old_script_output(release):
         tr.translate("good morning", "uz", script="old")
 
 
+def test_spinning_off_translates_the_same(release):
+    on = OnnxTranslator.from_pretrained(release, precision="fp32")
+    off = OnnxTranslator.from_pretrained(release, precision="fp32", threads=2, spinning=False)
+    assert off.translate(TEXTS, "uz") == on.translate(TEXTS, "uz")
+
+
 def test_runtime_does_not_need_torch(release):
     code = (
         "import sys; sys.modules['torch'] = None\n"
